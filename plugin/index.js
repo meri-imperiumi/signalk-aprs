@@ -89,7 +89,7 @@ module.exports = (app) => {
             const frame = {
               sourceCallsign: settings.beacon.callsign,
               sourceSsid: settings.beacon.ssid,
-              destinationCallsign: 'APLRG1', // TODO: Register this plugin
+              destinationCallsign: 'APZ42', // TODO: Register this plugin
               payload,
               repeaters: [
                 {
