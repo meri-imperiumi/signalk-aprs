@@ -147,14 +147,104 @@ module.exports = (app) => {
           ssid: {
             type: 'integer',
             description: 'SSID',
-            default: 0,
+            default: 8,
+            oneOf: [
+              {
+                const: 0,
+                title: '0: Primary station',
+              },
+              {
+                const: 1,
+                title: '1: Generic additional station',
+              },
+              {
+                const: 2,
+                title: '1: Generic additional station',
+              },
+              {
+                const: 3,
+                title: '3: Generic additional station',
+              },
+              {
+                const: 4,
+                title: '4: Generic additional station',
+              },
+              {
+                const: 5,
+                title: '5: Other network (D-Star, 3G)',
+              },
+              {
+                const: 6,
+                title: '6: Satellite',
+              },
+              {
+                const: 7,
+                title: '7: Handheld radion',
+              },
+              {
+                const: 8,
+                title: '8: Boat / ship',
+              },
+              {
+                const: 9,
+                title: '9: Mobile station',
+              },
+              {
+                const: 10,
+                title: '10: APRS-IS (no radio)',
+              },
+              {
+                const: 11,
+                title: '11: Balloon, aircraft, spacecraft',
+              },
+              {
+                const: 12,
+                title: '12: APRStt, DTMF, ... (one-way)',
+              },
+              {
+                const: 13,
+                title: '13: Weather station',
+              },
+              {
+                const: 14,
+                title: '14: Freight vehicle',
+              },
+              {
+                const: 15,
+                title: '15: Generic additional station',
+              },
+            ],
           },
           symbol: {
             type: 'string',
-            minLength: 2,
-            maxLength: 2,
             description: 'APRS symbol',
             default: '/Y',
+            oneOf: [
+              {
+                const: '/Y',
+                title: '/Y: Yacht (sailboat)',
+              },
+              {
+                const: '/s',
+                title: '/s: Ship (power boat)',
+              },
+              {
+                const: '/C',
+                title: '/C: Canoe',
+              },
+              {
+                const: '\\C',
+                title: '\\C: Coastguard',
+              },
+              {
+                const: '\\N',
+                title: '\\N: Navigation Buoy',
+              },
+              {
+                const: '/i',
+                title: '/i: Island',
+              },
+            ],
           },
           note: {
             type: 'string',
@@ -181,6 +271,10 @@ module.exports = (app) => {
           type: 'object',
           required: ['host', 'port'],
           properties: {
+            description: {
+              type: 'string',
+              description: 'TNC description',
+            },
             host: {
               type: 'string',
               description: 'TNC host address',
