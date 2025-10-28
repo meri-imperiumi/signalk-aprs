@@ -63,8 +63,19 @@ module.exports = (app) => {
         }
         if (Number.isFinite(data.weather.barometer)) {
           values.push({
-            path: 'environment.wind.pressure',
+            path: 'environment.outside.pressure',
             value: data.weather.barometer * 1000, // APRS uses tenths of a mb
+          });
+        }
+        if (Number.isFinite(data.weather.humidity)) {
+          let humidity = data.weather.humidity / 100;
+          if (data.weather.humidity === 0) {
+            // 00 is 100
+            humidity = 1;
+          }
+          values.push({
+            path: 'environment.outside.absoluteHumidity',
+            value: humidity,
           });
         }
         if (values.length) {
