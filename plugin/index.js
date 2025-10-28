@@ -6,18 +6,34 @@ const { formatLatitude, formatLongitude, formatAddress } = require('./aprs');
 module.exports = (app) => {
   const plugin = {};
   let unsubscribes = [];
+  let beacons = {};
   let connections = [];
   let publishInterval;
   plugin.id = 'signalk-aprs';
   plugin.name = 'APRS';
   plugin.description = 'Connect Signal K with the Automatic Packet Reporting System for Radio Amateurs';
 
+  function beaconsOnline() {
+    // Seen in last 2h is considered online
+    const onlineSecs = 60 * 60 * 2;
+    const now = new Date();
+    return Object
+      .keys(beacons)
+      .filter((b) => {
+        if (beacons[b] > now.getTime() - (onlineSecs * 1000)) {
+          return true;
+        }
+        return false;
+      })
+      .length;
+  }
+
   function setConnectionStatus() {
     if (connections.length === 0) {
       app.setPluginStatus('No TNC connection');
     }
     const connectedStr = connections.map((c) => c.address).join(', ');
-    app.setPluginStatus(`Connected to TNC ${connectedStr}`);
+    app.setPluginStatus(`Connected to TNC ${connectedStr}. ${beaconsOnline()} beacons online.`);
   }
 
   plugin.start = (settings) => {
@@ -29,6 +45,7 @@ module.exports = (app) => {
     const processor = new APRSProcessor();
     processor.on('aprsData', (data) => {
       app.setPluginStatus(`RX ${data.info}`);
+      beacons[formatAddress(data.source)] = new Date();
       if (data.weather) {
         // WX station, populate to Signal K
         const values = [];
