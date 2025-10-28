@@ -14,8 +14,8 @@ module.exports = (app) => {
   plugin.description = 'Connect Signal K with the Automatic Packet Reporting System for Radio Amateurs';
 
   function beaconsOnline() {
-    // Seen in last 2h is considered online
-    const onlineSecs = 60 * 60 * 2;
+    // LoRa APRS iGate uses 30min
+    const onlineSecs = 60 * 60 * 0.5;
     const now = new Date();
     return Object
       .keys(beacons)
