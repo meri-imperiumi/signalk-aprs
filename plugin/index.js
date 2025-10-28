@@ -59,6 +59,11 @@ module.exports = (app) => {
           // Remove FEND and FEND before processing
           processor.data(data.slice(1, -1));
         });
+        socket.on('close', () => {
+          connections.splice(connections.indexOf(conn), 1);
+          setConnectionStatus();
+          // TODO: Reconnect handling
+        });
       });
       app.setPluginStatus(`Connecting to TNC ${connectionSetting.host}:${connectionSetting.port}`);
       socket.connect(connectionSetting.port, connectionSetting.host);
