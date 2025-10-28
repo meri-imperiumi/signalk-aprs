@@ -2,7 +2,7 @@
   "name": "@meri-imperiumi/signalk-aprs",
   "version": "1.0.0",
   "description": "Signal K plugin for interacting with the Automatic Packet Reporting System for radio amateurs",
-  "main": "index.js",
+  "main": "plugin/index.js",
   "scripts": {
     "test": "eslint ."
   },
@@ -15,7 +15,6 @@
     "signalk-node-server-plugin",
     "signalk-category-hardware"
   ],
-  "main": "plugin/index.js",
   "signalk-plugin-enabled-by-default": false,
   "author": "Henri Bergius <henri.bergius@iki.fi>",
   "publishConfig": {
@@ -23,8 +22,8 @@
   },
   "license": "MIT",
   "dependencies": {
-    "aprs-parser": "^1.0.9",
-    "jsax25": "^1.1.0"
+    "kiss-tnc": "^2.0.1",
+    "utils-for-aprs": "^3.1.0"
   },
   "devDependencies": {
     "eslint": "^8.57.1",

@@ -1,25 +1,7 @@
-const { KissConnection } = require('jsax25');
-
-function formatLatitude(coord) {
-  const degFloat = Math.abs(coord);
-  const deg = String(Math.floor(degFloat)).padStart(2, '0');
-  const minFloat = 60 * (degFloat - Math.floor(degFloat));
-  const min = String(Math.floor(minFloat)).padStart(2, '0');
-  const secFloat = 60 * (minFloat - Math.floor(minFloat));
-  const sec = String(Math.floor(secFloat)).padStart(2, '0');
-  const sign = coord > 0 ? 'N' : 'S';
-  return `${deg}${min}.${sec}${sign}`;
-}
-function formatLongitude(coord) {
-  const degFloat = Math.abs(coord);
-  const deg = String(Math.floor(degFloat)).padStart(3, '0');
-  const minFloat = 60 * (degFloat - Math.floor(degFloat));
-  const min = String(Math.floor(minFloat)).padStart(2, '0');
-  const secFloat = 60 * (minFloat - Math.floor(minFloat));
-  const sec = String(Math.floor(secFloat)).padStart(2, '0');
-  const sign = coord > 0 ? 'E' : 'W';
-  return `${deg}${min}.${sec}${sign}`;
-}
+const { Socket } = require('node:net');
+const { KISSSender } = require('kiss-tnc');
+const { APRSProcessor, newKISSFrame } = require('utils-for-aprs');
+const { formatLatitude, formatLongitude } = require('./aprs');
 
 module.exports = (app) => {
   const plugin = {};
@@ -30,26 +12,55 @@ module.exports = (app) => {
   plugin.name = 'APRS';
   plugin.description = 'Connect Signal K with the Automatic Packet Reporting System for Radio Amateurs';
 
+  function setConnectionStatus() {
+    if (connections.length === 0) {
+      app.setPluginStatus('No TNC connection');
+    }
+    const connectedStr = connections.map((c) => c.address).join(', ');
+    app.setPluginStatus(`Connected to TNC ${connectedStr}`);
+  }
+
   plugin.start = (settings) => {
     if (!settings.connections || !settings.connections.length) {
       // Not much to do here
       app.setPluginStatus('No TNC connections configured');
       return;
     }
+    const processor = new APRSProcessor();
+    processor.on('aprsData', (data) => {
+      app.setPluginStatus(`RX ${data.info}`);
+      // TODO: Populate into SK data structure
+      setTimeout(() => {
+        setConnectionStatus();
+      }, 3000);
+    });
     settings.connections.forEach((connectionSetting) => {
       if (!connectionSetting.enabled) {
         return;
       }
-      const conn = new KissConnection({
-        tcpHost: connectionSetting.host,
-        tcpPort: connectionSetting.port,
+      const mySendStream = new KISSSender();
+      const socket = new Socket();
+      socket.once('ready', () => {
+        mySendStream.pipe(socket);
+        connections.push({
+          address: `${connectionSetting.host}:${connectionSetting.port}`,
+          socket,
+          send: mySendStream,
+        });
+        setConnectionStatus();
+        // TODO: Reconnect handling
+        socket.on('data', (data) => {
+          app.debug(data);
+          if (data.length < 4) {
+            // We don't want to parse empty frames
+            return;
+          }
+          // Remove FEND and FEND before processing
+          processor.data(data.slice(1, -1));
+        });
       });
-      connections.push(conn);
-      conn.on('data', (frame) => {
-        // TODO: Process into SK data structure
-        const addressed = `${frame.sourceCallsign}>${frame.destinationCallsign}:${frame.payload}`;
-        app.setPluginStatus(`RX ${addressed}`);
-      });
+      app.setPluginStatus(`Connecting to TNC ${connectionSetting.host}:${connectionSetting.port}`);
+      socket.connect(connectionSetting.port, connectionSetting.host);
     });
     const minutes = settings.beacon.interval || 15;
     app.subscriptionmanager.subscribe(
@@ -86,21 +97,24 @@ module.exports = (app) => {
             }
 
             const payload = `:=${formatLatitude(v.value.latitude)}${settings.beacon.symbol[0]}${formatLongitude(v.value.longitude)}${settings.beacon.symbol[1]} ${settings.beacon.note}`;
-            const frame = {
-              sourceCallsign: settings.beacon.callsign,
-              sourceSsid: settings.beacon.ssid,
-              destinationCallsign: 'APZ42', // TODO: Register this plugin
-              payload,
+            const frame = newKISSFrame().fromFrame({
+              destination: {
+                callsign: 'APZ42',
+              },
+              source: {
+                callsign: settings.beacon.callsign,
+                ssid: settings.beacon.ssid,
+              },
               repeaters: [
                 {
                   callsign: 'WIDE1',
                   ssid: '1',
                 },
               ],
-              frameType: 'unnumbered',
-            };
+              info: payload,
+            });
 
-            connections.forEach((conn) => conn.send(frame));
+            connections.forEach((conn) => conn.sender.write(frame.build().slice(1)));
             app.setPluginStatus(`TX ${payload}`);
           });
         });
@@ -114,7 +128,7 @@ module.exports = (app) => {
     }
     unsubscribes.forEach((f) => f());
     unsubscribes = [];
-    connections.forEach((c) => c.end());
+    connections.forEach((c) => c.socket.destroy());
     connections = [];
   };
 
