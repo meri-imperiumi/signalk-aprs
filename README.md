@@ -21,6 +21,7 @@ Very early stages, being tested with the [LoRa APRS iGate](https://github.com/ri
 
 ## Planned features
 
+* Reconnection handling
 * Transmit WX data from boat sensors (wind, temperature, etc)
 * Show other APRS beacons as vessels in Freeboard etc
 * Send alerts to crew over APRS
