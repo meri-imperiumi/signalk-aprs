@@ -23,3 +23,4 @@ Very early stages, being tested with the [LoRa APRS iGate](https://github.com/ri
 * Show other APRS beacons as vessels in Freeboard etc
 * Send alerts to crew over APRS
 * Get a [dedicated TOCALL for this plugin](https://github.com/aprsorg/aprs-deviceid/issues/244)
+* Figure out how to handle APRS messaging from/to boat
