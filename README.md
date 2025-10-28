@@ -5,6 +5,8 @@ This plugin integrates [Signal K](https://signalk.org) with the [Automatic Packe
 
 You need to be a licensed radio amateur to use APRS. For everybody else, [Signal K Meshtastic Plugin](https://github.com/meri-imperiumi/signalk-meshtastic) is the way to go.
 
+APRS is a registered trademark Bob Bruninga, WB4APR.
+
 ## Status
 
 Very early stages, being tested with the [LoRa APRS iGate](https://github.com/richonguzman/LoRa_APRS_iGate) firmware.
