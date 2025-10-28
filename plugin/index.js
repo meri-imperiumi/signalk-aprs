@@ -80,16 +80,35 @@ module.exports = (app) => {
         }
         if (values.length) {
           values.push({
-            path: 'name',
+            path: '',
+            value: {
+              name: data.source.callsign,
+            },
+          });
+          values.push({
+            path: 'communication.aprs.callsign',
             value: data.source.callsign,
           });
+          values.push({
+            path: 'communication.aprs.ssid',
+            value: data.source.ssid,
+          });
+          values.push({
+            path: 'communication.aprs.route',
+            value: data.repeaterPath.map((r) => formatAddress(r)),
+          });
+          values.push({
+            path: 'communication.aprs.comment',
+            value: data.comment || '',
+          });
+
           app.handleMessage('signalk-aprs', {
             context: `meteo.${data.source.callsign}`,
             updates: [
               {
                 source: {
                   label: 'signalk-aprs',
-                  src: data.source.callsign,
+                  src: formatAddress(data.source),
                 },
                 timestamp: new Date(data.position.timestamp).toISOString(),
                 values,
