@@ -29,7 +29,64 @@ module.exports = (app) => {
     const processor = new APRSProcessor();
     processor.on('aprsData', (data) => {
       app.setPluginStatus(`RX ${data.info}`);
-      // TODO: Populate into SK data structure
+      if (data.weather) {
+        // WX station, populate to Signal K
+        const values = [];
+        if (data.position
+          && data.position.coords
+          && Number.isFinite(data.position.coords.latitude)) {
+          values.push({
+            path: 'navigation.position',
+            value: {
+              latitude: data.position.coords.latitude,
+              longitude: data.position.coords.longitude,
+            },
+          });
+        }
+        if (Number.isFinite(data.weather.temperature)) {
+          values.push({
+            path: 'environment.outside.temperature',
+            value: (data.weather.temperature + 459.67) * (5 / 9), // APRS uses Fahrenheit
+          });
+        }
+        if (Number.isFinite(data.weather.windSpeed)) {
+          values.push({
+            path: 'environment.wind.speedTrue',
+            value: data.weather.windSpeed * 0.44704, // APRS uses mph
+          });
+        }
+        if (Number.isFinite(data.weather.windDirection)) {
+          values.push({
+            path: 'environment.wind.directionTrue',
+            value: data.weather.windDirection * (Math.PI / 180),
+          });
+        }
+        if (Number.isFinite(data.weather.barometer)) {
+          values.push({
+            path: 'environment.wind.pressure',
+            value: data.weather.barometer * 1000, // APRS uses tenths of a mb
+          });
+        }
+        if (values.length) {
+          values.push({
+            path: 'name',
+            value: data.source.callsign,
+          });
+          app.handleMessage('signalk-aprs', {
+            context: `meteo.${data.source.callsign}`,
+            updates: [
+              {
+                source: {
+                  label: 'signalk-aprs',
+                  src: data.source.callsign,
+                },
+                timestamp: new Date(data.position.timestamp).toISOString(),
+                values,
+              },
+            ],
+          });
+        }
+      }
       setTimeout(() => {
         setConnectionStatus();
       }, 3000);
