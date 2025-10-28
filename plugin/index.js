@@ -268,6 +268,7 @@ module.exports = (app) => {
     unsubscribes = [];
     connections.forEach((c) => c.socket.destroy());
     connections = [];
+    beacons = {};
   };
 
   plugin.schema = {
