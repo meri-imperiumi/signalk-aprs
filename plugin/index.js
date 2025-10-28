@@ -1,7 +1,7 @@
 const { Socket } = require('node:net');
 const { KISSSender } = require('kiss-tnc');
 const { APRSProcessor, newKISSFrame } = require('utils-for-aprs');
-const { formatLatitude, formatLongitude } = require('./aprs');
+const { formatLatitude, formatLongitude, formatAddress } = require('./aprs');
 
 module.exports = (app) => {
   const plugin = {};
@@ -198,7 +198,7 @@ module.exports = (app) => {
                 {
                   source: {
                     label: 'signalk-aprs',
-                    src: `${settings.beacon.callsign}-${settings.beacon.ssid}`,
+                    src: formatAddress(settings.beacon),
                   },
                   timestamp: new Date().toISOString(),
                   values: [

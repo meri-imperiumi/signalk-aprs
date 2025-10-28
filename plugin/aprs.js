@@ -20,7 +20,15 @@ function formatLongitude(coord) {
   return `${deg}${min}.${sec}${sign}`;
 }
 
+function formatAddress(obj) {
+  if (!obj.ssid) {
+    return obj.callsign;
+  }
+  return `${obj.callsign}-${obj.ssid}`;
+}
+
 module.exports = {
   formatLatitude,
   formatLongitude,
+  formatAddress,
 };
