@@ -11,6 +11,9 @@ Very early stages, being tested with the [LoRa APRS iGate](https://github.com/ri
 
 ## Features
 
+* Support for connecting to multiple KISS TNCs
+  - This allows connecting to both LoRa APRS and VHF APRS for instance
+  - TX can be enabled separately for each TNC, allowing listen-only connections
 * Periodically send vessel position as a beacon
 
 ## Planned features

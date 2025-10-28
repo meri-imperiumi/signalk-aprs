@@ -42,13 +42,14 @@ module.exports = (app) => {
       const socket = new Socket();
       socket.once('ready', () => {
         mySendStream.pipe(socket);
-        connections.push({
+        const conn = {
           address: `${connectionSetting.host}:${connectionSetting.port}`,
           socket,
-          send: mySendStream,
-        });
+          sender: mySendStream,
+          tx: connectionSetting.tx || false,
+        };
+        connections.push(conn);
         setConnectionStatus();
-        // TODO: Reconnect handling
         socket.on('data', (data) => {
           app.debug(data);
           if (data.length < 4) {
@@ -87,15 +88,9 @@ module.exports = (app) => {
             return;
           }
           u.values.forEach((v) => {
-            // TODO: Produce Maidenhead
             if (v.path !== 'navigation.position') {
               return;
             }
-            if (!settings.beacon.enabled) {
-              app.setPluginStatus('Beaconing disabled, no TX');
-              return;
-            }
-
             const payload = `:=${formatLatitude(v.value.latitude)}${settings.beacon.symbol[0]}${formatLongitude(v.value.longitude)}${settings.beacon.symbol[1]} ${settings.beacon.note}`;
             const frame = newKISSFrame().fromFrame({
               destination: {
@@ -114,8 +109,42 @@ module.exports = (app) => {
               info: payload,
             });
 
-            connections.forEach((conn) => conn.sender.write(frame.build().slice(1)));
-            app.setPluginStatus(`TX ${payload}`);
+            connections.forEach((conn) => {
+              if (!conn.tx) {
+                return;
+              }
+              conn.sender.write(frame.build().slice(1));
+              app.setPluginStatus(`TX ${payload}`);
+            });
+            setTimeout(() => {
+              setConnectionStatus();
+            }, 3000);
+            app.handleMessage('signalk-aprs', {
+              context: 'vessels.self',
+              updates: [
+                {
+                  source: {
+                    label: 'signalk-aprs',
+                    src: `${settings.beacon.callsign}-${settings.beacon.ssid}`,
+                  },
+                  timestamp: new Date().toISOString(),
+                  values: [
+                    {
+                      path: 'communication.aprs.callsign',
+                      value: settings.beacon.callsign,
+                    },
+                    {
+                      path: 'communication.aprs.ssid',
+                      value: settings.beacon.ssid,
+                    },
+                    {
+                      path: 'communication.aprs.symbol',
+                      value: settings.beacon.symbol,
+                    },
+                  ],
+                },
+              ],
+            });
           });
         });
       },
@@ -251,11 +280,6 @@ module.exports = (app) => {
             description: 'Personal note',
             default: 'https://signalk.org',
           },
-          enabled: {
-            type: 'boolean',
-            title: 'Transmit vessel as APRS beacon periodically',
-            default: false,
-          },
           interval: {
             type: 'integer',
             description: 'Beacon transmission interval (in minutes)',
@@ -288,6 +312,11 @@ module.exports = (app) => {
               type: 'boolean',
               description: 'Enable TNC connection',
               default: true,
+            },
+            tx: {
+              type: 'boolean',
+              description: 'Transmit beacon to this TNC',
+              default: false,
             },
           },
         },
