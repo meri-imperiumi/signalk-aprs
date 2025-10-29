@@ -275,13 +275,14 @@ module.exports = (app) => {
               info: payload,
             });
 
-            const frameBuffer = frame.build().slice(1);
+            const frameBuffer = frame.build();
+            app.debug('TX', frame);
             connections.forEach((conn) => {
-              if (!conn.tx || !conn.online) {
+              if (!conn.tx || !conn.online || !conn.sender) {
                 return;
               }
               app.debug(`${conn.address} TX`, frameBuffer);
-              conn.sender.write(frameBuffer);
+              conn.sender.write(frameBuffer.slice(1));
               app.setPluginStatus(`TX ${payload}`);
             });
             setTimeout(() => {
