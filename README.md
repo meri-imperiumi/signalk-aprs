@@ -16,13 +16,14 @@ Very early stages, being tested with the [LoRa APRS iGate](https://github.com/ri
 * Support for connecting to multiple KISS TNCs
   - This allows connecting to both LoRa APRS and VHF APRS for instance
   - TX can be enabled separately for each TNC, allowing listen-only connections
+  - The plugin will keep trying to reconnect to TNCs that are offline
 * Periodically sending vessel position as a beacon to TX-enabled TNCs
 * Populating received WX stations into Signal K data structure
 
 ## Planned features
 
-* Reconnection handling
 * Transmit WX data from boat sensors (wind, temperature, etc)
+* Send telemetry (battery status, water depth, anchor distance) over APRS
 * Show other APRS beacons as vessels in Freeboard etc
 * Send alerts to crew over APRS
 * Get a [dedicated TOCALL for this plugin](https://github.com/aprsorg/aprs-deviceid/issues/244)

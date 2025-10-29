@@ -29,10 +29,12 @@ module.exports = (app) => {
   }
 
   function setConnectionStatus() {
-    if (connections.length === 0) {
+    const connected = connections.filter((c) => c.online);
+    if (connected.length === 0) {
       app.setPluginStatus('No TNC connection');
     }
-    const connectedStr = connections.map((c) => c.address).join(', ');
+    const connectedStr = connected
+      .map((c) => c.address).join(', ');
     app.setPluginStatus(`Connected to TNC ${connectedStr}. ${beaconsOnline()} beacons online.`);
   }
 
@@ -45,6 +47,7 @@ module.exports = (app) => {
     const processor = new APRSProcessor();
     processor.on('aprsData', (data) => {
       app.setPluginStatus(`RX ${data.info}`);
+      app.debug('RX', data);
       beacons[formatAddress(data.source)] = new Date();
       if (data.weather) {
         // WX station, populate to Signal K
@@ -142,45 +145,81 @@ module.exports = (app) => {
       if (!connectionSetting.enabled) {
         return;
       }
+      let attempt = 0;
       const connectionStr = `${connectionSetting.host}:${connectionSetting.port}`;
       const mySendStream = new KISSSender();
       const socket = new Socket();
-      const onError = (e) => {
-        app.error(`Failed to connect to ${connectionStr}: ${e.message}`);
-        setTimeout(() => {
+      const conn = {
+        address: connectionStr,
+        socket,
+        sender: mySendStream,
+        tx: connectionSetting.tx || false,
+        online: false,
+        reconnect: undefined,
+      };
+      connections.push(conn);
+
+      const connect = () => {
+        attempt += 1;
+        app.debug(`${connectionStr} connect attempt ${attempt}`);
+        app.setPluginStatus(`Connecting to TNC ${connectionStr}, attempt ${attempt}`);
+        socket.connect(connectionSetting.port, connectionSetting.host);
+      };
+      const onConnectionError = (e) => {
+        app.error(e);
+        app.setPluginError(`Failed to connect to ${connectionStr}: ${e.message}`);
+        if (conn.reconnect) {
+          return;
+        }
+        app.debug(`Setting eventual reconnect for ${connectionStr}`);
+        conn.reconnect = setTimeout(() => {
+          conn.reconnect = undefined;
           // Retry to connect
-          socket.connect(connectionSetting.port, connectionSetting.host);
+          connect();
         }, 10000);
       };
-      socket.on('error', onError);
-      socket.once('ready', () => {
-        socket.removeListener('error', onError);
-        mySendStream.pipe(socket);
-        const conn = {
-          address: connectionStr,
-          socket,
-          sender: mySendStream,
-          tx: connectionSetting.tx || false,
-        };
-        connections.push(conn);
+
+      socket.setTimeout(10000);
+      mySendStream.pipe(socket);
+      socket.once('error', onConnectionError);
+      socket.on('ready', () => {
+        app.debug(`${connectionStr} connected`);
+        conn.online = true;
+        socket.removeListener('error', onConnectionError);
         setConnectionStatus();
-        socket.on('data', (data) => {
-          app.debug(data);
-          if (data.length < 4) {
-            // We don't want to parse empty frames
-            return;
-          }
-          // Remove FEND and FEND before processing
-          processor.data(data.slice(1, -1));
-        });
-        socket.on('close', () => {
-          connections.splice(connections.indexOf(conn), 1);
-          setConnectionStatus();
-          // TODO: Reconnect handling
-        });
       });
-      app.setPluginStatus(`Connecting to TNC ${connectionSetting.host}:${connectionSetting.port}`);
-      socket.connect(connectionSetting.port, connectionSetting.host);
+      socket.on('data', (data) => {
+        app.debug(`${connectionStr} RX`, data);
+        if (data.length < 4) {
+          // We don't want to parse empty frames
+          return;
+        }
+        // Remove FEND and FEND before processing
+        processor.data(data.slice(1, -1));
+      });
+      socket.on('timeout', () => {
+        app.debug(`${connectionStr} connection timeout`);
+        socket.end();
+      });
+      socket.on('error', (e) => {
+        app.error(e);
+        app.setPluginError(`Error with ${connectionStr}: ${e.message}`);
+      });
+      socket.on('close', () => {
+        app.debug(`${connectionStr} connection closed`);
+        conn.online = false;
+        socket.once('error', onConnectionError);
+        if (conn.reconnect) {
+          return;
+        }
+        app.debug(`Setting eventual reconnect for ${connectionStr}`);
+        conn.reconnect = setTimeout(() => {
+          conn.reconnect = undefined;
+          // Retry to connect
+          connect();
+        }, 10000);
+      });
+      connect();
     });
     const minutes = settings.beacon.interval || 15;
     app.subscriptionmanager.subscribe(
@@ -228,11 +267,13 @@ module.exports = (app) => {
               info: payload,
             });
 
+            const frameBuffer = frame.build().slice(1);
             connections.forEach((conn) => {
-              if (!conn.tx) {
+              if (!conn.tx || !conn.online) {
                 return;
               }
-              conn.sender.write(frame.build().slice(1));
+              app.debug(`${conn.address} TX`, frameBuffer);
+              conn.sender.write(frameBuffer);
               app.setPluginStatus(`TX ${payload}`);
             });
             setTimeout(() => {
@@ -276,7 +317,10 @@ module.exports = (app) => {
     }
     unsubscribes.forEach((f) => f());
     unsubscribes = [];
-    connections.forEach((c) => c.socket.destroy());
+    connections.forEach((c) => {
+      c.socket.removeAllListeners();
+      c.socket.destroy();
+    });
     connections = [];
     beacons = {};
   };
