@@ -31,5 +31,7 @@ Very early stages, being tested with the [LoRa APRS iGate](https://github.com/ri
 
 ## Changes
 
+* 0.1.1 (2025-10-29)
+  - Fix position precision
 * 0.1.0 (2025-10-29)
   - Initial release, can beacon vessel position

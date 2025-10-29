@@ -1,6 +1,6 @@
 {
   "name": "@meri-imperiumi/signalk-aprs",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Signal K plugin for interacting with the Automatic Packet Reporting System for radio amateurs",
   "main": "plugin/index.js",
   "scripts": {
