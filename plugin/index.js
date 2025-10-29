@@ -9,6 +9,7 @@ module.exports = (app) => {
   let beacons = {};
   let connections = [];
   let publishInterval;
+  let state = '';
   plugin.id = 'signalk-aprs';
   plugin.name = 'APRS';
   plugin.description = 'Connect Signal K with the Automatic Packet Reporting System for Radio Amateurs';
@@ -230,6 +231,10 @@ module.exports = (app) => {
             path: 'navigation.position',
             period: minutes * 60 * 1000,
           },
+          {
+            path: 'navigation.state',
+            period: 60 * 1000,
+          },
         ],
       },
       unsubscribes,
@@ -246,10 +251,13 @@ module.exports = (app) => {
             return;
           }
           u.values.forEach((v) => {
+            if (v.path === 'navigation.state') {
+              state = v.value;
+            }
             if (v.path !== 'navigation.position') {
               return;
             }
-            const payload = `=${formatLatitude(v.value.latitude)}${settings.beacon.symbol[0]}${formatLongitude(v.value.longitude)}${settings.beacon.symbol[1]} ${settings.beacon.note}`;
+            const payload = `=${formatLatitude(v.value.latitude)}${settings.beacon.symbol[0]}${formatLongitude(v.value.longitude)}${settings.beacon.symbol[1]} ${app.getSelfPath('name')} ${state} ${settings.beacon.note}`;
             const frame = newKISSFrame().fromFrame({
               destination: {
                 callsign: 'APZ42', // FIXME: https://github.com/aprsorg/aprs-deviceid/issues/244
