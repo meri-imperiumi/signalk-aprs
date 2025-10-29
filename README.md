@@ -28,3 +28,8 @@ Very early stages, being tested with the [LoRa APRS iGate](https://github.com/ri
 * Send alerts to crew over APRS
 * Get a [dedicated TOCALL for this plugin](https://github.com/aprsorg/aprs-deviceid/issues/244)
 * Figure out how to handle APRS messaging from/to boat
+
+## Changes
+
+* 0.1.0 (2025-10-29)
+  - Initial release, can beacon vessel position
