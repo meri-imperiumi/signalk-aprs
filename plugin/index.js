@@ -142,12 +142,22 @@ module.exports = (app) => {
       if (!connectionSetting.enabled) {
         return;
       }
+      const connectionStr = `${connectionSetting.host}:${connectionSetting.port}`;
       const mySendStream = new KISSSender();
       const socket = new Socket();
+      const onError = (e) => {
+        app.error(`Failed to connect to ${connectionStr}: ${e.message}`);
+        setTimeout(() => {
+          // Retry to connect
+          socket.connect(connectionSetting.port, connectionSetting.host);
+        }, 10000);
+      };
+      socket.on('error', onError);
       socket.once('ready', () => {
+        socket.removeListener('error', onError);
         mySendStream.pipe(socket);
         const conn = {
-          address: `${connectionSetting.host}:${connectionSetting.port}`,
+          address: connectionStr,
           socket,
           sender: mySendStream,
           tx: connectionSetting.tx || false,
