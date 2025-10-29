@@ -147,12 +147,10 @@ module.exports = (app) => {
       }
       let attempt = 0;
       const connectionStr = `${connectionSetting.host}:${connectionSetting.port}`;
-      const mySendStream = new KISSSender();
       const socket = new Socket();
       const conn = {
         address: connectionStr,
         socket,
-        sender: mySendStream,
         tx: connectionSetting.tx || false,
         online: false,
         reconnect: undefined,
@@ -180,10 +178,12 @@ module.exports = (app) => {
       };
 
       socket.setTimeout(10000);
-      mySendStream.pipe(socket);
       socket.once('error', onConnectionError);
       socket.on('ready', () => {
         app.debug(`${connectionStr} connected`);
+        const mySendStream = new KISSSender();
+        mySendStream.pipe(socket);
+        conn.sender = mySendStream;
         conn.online = true;
         socket.removeListener('error', onConnectionError);
         setConnectionStatus();
