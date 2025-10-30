@@ -181,6 +181,7 @@ module.exports = (app) => {
       socket.setTimeout(10000);
       socket.once('error', onConnectionError);
       socket.on('ready', () => {
+        attempt = 0;
         app.debug(`${connectionStr} connected`);
         const mySendStream = new KISSSender();
         mySendStream.pipe(socket);
