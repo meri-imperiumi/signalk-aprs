@@ -26,11 +26,12 @@ Very early stages, being tested with the [LoRa APRS iGate](https://github.com/ri
 * Send telemetry (battery status, water depth, anchor distance) over APRS
 * Show other APRS beacons as vessels in Freeboard etc
 * Send alerts to crew over APRS
-* Get a [dedicated TOCALL for this plugin](https://github.com/aprsorg/aprs-deviceid/issues/244)
 * Figure out how to handle APRS messaging from/to boat
 
 ## Changes
 
+* 0.2.0 (2025-11-15)
+  - Using the new [dedicated APSIGK tocall](https://github.com/aprsorg/aprs-deviceid/issues/244)
 * 0.1.1 (2025-10-29)
   - Fix position precision
 * 0.1.0 (2025-10-29)

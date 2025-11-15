@@ -261,7 +261,7 @@ module.exports = (app) => {
             const payload = `=${formatLatitude(v.value.latitude)}${settings.beacon.symbol[0]}${formatLongitude(v.value.longitude)}${settings.beacon.symbol[1]} ${app.getSelfPath('name')} ${state} ${settings.beacon.note}`;
             const frame = newKISSFrame().fromFrame({
               destination: {
-                callsign: 'APZ42', // FIXME: https://github.com/aprsorg/aprs-deviceid/issues/244
+                callsign: 'APSIGK',
               },
               source: {
                 callsign: settings.beacon.callsign,
