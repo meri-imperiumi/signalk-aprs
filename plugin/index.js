@@ -103,7 +103,7 @@ module.exports = (app) => {
           values.push({
             path: '',
             value: {
-              name: data.source.callsign,
+              name: `${data.source.callsign}-${data.source.ssid}`,
             },
           });
           values.push({
@@ -123,15 +123,14 @@ module.exports = (app) => {
             value: data.comment || '',
           });
 
-          let ts = new Date();
-          try {
-            ts = new Date(data.position.timestamp);
-          } catch (e) {
+          let ts = new Date(data.position.timestamp);
+          if (Number.isNaN(ts.getTime())) {
             app.debug(`Invalid timestamp ${data.position.timestamp}`);
+            ts = new Date();
           }
 
           app.handleMessage('signalk-aprs', {
-            context: `meteo.${data.source.callsign}`,
+            context: `meteo.${data.source.callsign}-${data.source.ssid}`,
             updates: [
               {
                 source: {
