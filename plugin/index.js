@@ -123,6 +123,13 @@ module.exports = (app) => {
             value: data.comment || '',
           });
 
+          let ts = new Date();
+          try {
+            ts = new Date(data.position.timestamp);
+          } catch (e) {
+            app.debug(`Invalid timestamp ${data.position.timestamp}`);
+          }
+
           app.handleMessage('signalk-aprs', {
             context: `meteo.${data.source.callsign}`,
             updates: [
@@ -131,7 +138,7 @@ module.exports = (app) => {
                   label: 'signalk-aprs',
                   src: formatAddress(data.source),
                 },
-                timestamp: new Date(data.position.timestamp).toISOString(),
+                timestamp: ts.toISOString(),
                 values,
               },
             ],
