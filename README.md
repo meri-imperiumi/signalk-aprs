@@ -30,6 +30,8 @@ Very early stages, being tested with the [LoRa APRS iGate](https://github.com/ri
 
 ## Changes
 
+* 0.2.2 (2026-06-16)
+  - Added application icon
 * 0.2.1 (2026-01-20)
   - Create separate context for each SSID of same callsign
   - Handle malformatted timestamps coming from beacons
