@@ -30,14 +30,4 @@ Very early stages, being tested with the [LoRa APRS iGate](https://github.com/ri
 
 ## Changes
 
-* 0.2.2 (2026-06-16)
-  - Added application icon
-* 0.2.1 (2026-01-20)
-  - Create separate context for each SSID of same callsign
-  - Handle malformatted timestamps coming from beacons
-* 0.2.0 (2025-11-15)
-  - Using the new [dedicated APSIGK tocall](https://github.com/aprsorg/aprs-deviceid/issues/244)
-* 0.1.1 (2025-10-29)
-  - Fix position precision
-* 0.1.0 (2025-10-29)
-  - Initial release, can beacon vessel position
+See [Changelog](CHANGELOG.md)
